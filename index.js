@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const inventory = [
   {
     id: 101,
@@ -102,6 +104,27 @@ const orders = [
   },
 ];
 
+/*findProduct searches product by id if the product is found return the whole object*/
+function findProduct(productId) {
+  const found = inventory.find((product) => product.id === productId);
+
+  return found;
+}
+
+function isProductAvailable(productId, quantity) {
+  /*should check if product exists by id then check if stock is valid to validate*/
+
+  const found = inventory.find((product) => product.id === productId);
+
+  if (!found) {
+    return false;
+  }
+
+  return found.stock >= quantity;
+}
+
+findProduct(102);
+isProductAvailable(103, 21);
 inventory;
 customers;
 drivers;
