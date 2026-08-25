@@ -104,27 +104,35 @@ const orders = [
   },
 ];
 
-/*findProduct searches product by id if the product is found return the whole object*/
-function findProduct(productId) {
-  const found = inventory.find((product) => product.id === productId);
+function findProduct(invento, productId) {
+  /*findProduct searches product by id if the product is found return the whole object*/
 
-  return found;
+  return invento.find((product) => product.id === productId) || null;
 }
 
-function isProductAvailable(productId, quantity) {
-  /*should check if product exists by id then check if stock is valid to validate*/
+function isProductAvailable(product, quantity) {
+  /*check if product quantity is >= quantity and validates*/
 
-  const found = inventory.find((product) => product.id === productId);
+  if (!product || typeof product.stock !== "number") return false;
+  if (typeof quantity !== "number" || quantity <= 0) return false;
 
-  if (!found) {
-    return false;
-  }
-
-  return found.stock >= quantity;
+  return product.stock >= quantity;
 }
 
-findProduct(102);
-isProductAvailable(103, 21);
+function getProductValue(product, quantity) {
+  /*
+  this function calculates the subtotal of a product as per the order quantity and price per product
+  */
+  if (!product || typeof product.price !== "number") return false;
+  if (typeof quantity !== "number" || quantity <= 0) return false;
+
+  return product.price * quantity;
+}
+
+findProduct(inventory, 101);
+isProductAvailable({ id: 101, stock: 15 }, 21);
+getProductValue({ id: 102, price: 500 }, 5);
+
 inventory;
 customers;
 drivers;
