@@ -168,8 +168,3 @@ getProductValue({ id: 102, price: 500 }, 5);
 reduceStock({ id: 103, stock: 20 }, 16);
 restockProduct({ id: 104, stock: 10 }, 20);
 getInventoryValue(inventory);
-
-inventory;
-customers;
-drivers;
-orders;
