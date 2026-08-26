@@ -113,8 +113,8 @@ function findProduct(invento, productId) {
 function isProductAvailable(product, quantity) {
   /*check if product quantity is >= quantity and validates*/
 
-  if (!product || typeof product.stock !== "number") return false;
-  if (typeof quantity !== "number" || quantity <= 0) return false;
+  if (!product || typeof product.stock !== "number") return 0;
+  if (typeof quantity !== "number" || quantity <= 0) return 0;
 
   return product.stock >= quantity;
 }
@@ -123,15 +123,51 @@ function getProductValue(product, quantity) {
   /*
   this function calculates the subtotal of a product as per the order quantity and price per product
   */
-  if (!product || typeof product.price !== "number") return false;
-  if (typeof quantity !== "number" || quantity <= 0) return false;
+  if (!product || typeof product.price !== "number") return 0;
+  if (typeof quantity !== "number" || quantity <= 0) return 0;
 
   return product.price * quantity;
+}
+
+function reduceStock(product, quantity) {
+  /*
+  this function gets the quantity and and subtracts it from the inhouse stock or quantity
+  */
+
+  if (typeof quantity !== "number" || quantity <= 0) return 0;
+  if (!product || typeof product.stock !== "number") return 0;
+  if (product.stock < quantity) return 0;
+
+  product.stock -= quantity;
+  return product.stock;
+}
+
+function restockProduct(product, quantity) {
+  //adds stock to the inventory
+
+  if (!product || typeof product.stock !== "number") return 0;
+  if (typeof quantity !== "number" || quantity <= 0) return 0;
+
+  product.stock += quantity;
+  return product.stock;
+}
+
+function getInventoryValue(invento) {
+  /*this function finds the value of the products and adds it together to give one total value*/
+
+  return invento.reduce((total, item) => {
+    const stock = item.stock || 0;
+    const price = item.price || 0;
+    return total + stock * price;
+  }, 0);
 }
 
 findProduct(inventory, 101);
 isProductAvailable({ id: 101, stock: 15 }, 21);
 getProductValue({ id: 102, price: 500 }, 5);
+reduceStock({ id: 103, stock: 20 }, 16);
+restockProduct({ id: 104, stock: 10 }, 20);
+getInventoryValue(inventory);
 
 inventory;
 customers;
