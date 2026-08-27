@@ -156,9 +156,7 @@ function getInventoryValue(invento) {
   /*this function finds the value of the products and adds it together to give one total value*/
 
   return invento.reduce((total, item) => {
-    const stock = item.stock || 0;
-    const price = item.price || 0;
-    return total + stock * price;
+    return total + (item.stock || 0) * (item.price || 0);
   }, 0);
 }
 
