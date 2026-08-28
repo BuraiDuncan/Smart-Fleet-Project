@@ -104,17 +104,16 @@ const orders = [
   },
 ];
 
+//START OF INVENTORY ENGINE
 function findProduct(invento, productId) {
   /*findProduct searches product by id if the product is found return the whole object*/
-
   return invento.find((product) => product.id === productId) || null;
 }
 
 function isProductAvailable(product, quantity) {
   /*check if product quantity is >= quantity and validates*/
-
-  if (!product || typeof product.stock !== "number") return 0;
-  if (typeof quantity !== "number" || quantity <= 0) return 0;
+  if (!product || typeof product.stock !== "number") return false;
+  if (typeof quantity !== "number" || quantity <= 0) return false;
 
   return product.stock >= quantity;
 }
@@ -133,7 +132,6 @@ function reduceStock(product, quantity) {
   /*
   this function gets the quantity and and subtracts it from the inhouse stock or quantity
   */
-
   if (typeof quantity !== "number" || quantity <= 0) return 0;
   if (!product || typeof product.stock !== "number") return 0;
   if (product.stock < quantity) return 0;
@@ -144,7 +142,6 @@ function reduceStock(product, quantity) {
 
 function restockProduct(product, quantity) {
   //adds stock to the inventory
-
   if (!product || typeof product.stock !== "number") return 0;
   if (typeof quantity !== "number" || quantity <= 0) return 0;
 
@@ -154,10 +151,41 @@ function restockProduct(product, quantity) {
 
 function getInventoryValue(invento) {
   /*this function finds the value of the products and adds it together to give one total value*/
-
   return invento.reduce((total, item) => {
     return total + (item.stock || 0) * (item.price || 0);
   }, 0);
+}
+//END OF INVENTORY ENGINE
+
+//START OF CUSTOMER ORDERS HANDLING
+function findOrder(orderList, orderId) {
+  //finds the order and return it as an object.
+  return orderList.find((obj) => obj.id === orderId) || null;
+}
+
+function calculateOrderSubtotal(order, invento) {
+  //safety check if oder exist and oder.items
+  if (!order || !Array.isArray(order.items)) {
+    return "invalid order data";
+  }
+
+  //find product first (validate)
+  const allAvailable = order.items.every((item) => {
+    const product = findProduct(invento, item.productId);
+    return isProductAvailable(product, item.quantity);
+  });
+
+  if (!allAvailable) return "product not available";
+
+  //calculation and inventory update
+  const totalSum = order.items.reduce((total, item) => {
+    const product = findProduct(invento, item.productId);
+    reduceStock(product, item.quantity);
+    return total + getProductValue(product, item.quantity);
+  }, 0);
+
+  order.status = "completed";
+  return "order successful! " + totalSum;
 }
 
 findProduct(inventory, 101);
@@ -166,3 +194,5 @@ getProductValue({ id: 102, price: 500 }, 5);
 reduceStock({ id: 103, stock: 20 }, 16);
 restockProduct({ id: 104, stock: 10 }, 20);
 getInventoryValue(inventory);
+findOrder(orders, 5001);
+calculateOrderSubtotal(orders, inventory);
