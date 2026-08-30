@@ -169,24 +169,49 @@ function calculateOrderSubtotal(order, invento) {
     return "invalid order data";
   }
 
-  //find product first (validate)
+  //calculation and inventory update
+  return order.items.reduce((total, item) => {
+    const product = findProduct(invento, item.productId);
+
+    if (!isProductAvailable(product, item.quantity)) {
+      return total;
+    }
+
+    return total + getProductValue(product, item.quantity);
+  }, 0);
+}
+
+function completeOrder(order, invento) {
+  //this function processes the customer orders
+  if (!order || !Array.isArray(order.items)) {
+    return "invalid data";
+  }
+
   const allAvailable = order.items.every((item) => {
     const product = findProduct(invento, item.productId);
+
     return isProductAvailable(product, item.quantity);
   });
 
-  if (!allAvailable) return "product not available";
+  if (!allAvailable) {
+    return "product not available";
+  }
 
-  //calculation and inventory update
-  const totalSum = order.items.reduce((total, item) => {
+  const subtotal = calculateOrderSubtotal(order, invento);
+
+  //reduce stock from inventory
+  order.items.forEach((item) => {
     const product = findProduct(invento, item.productId);
     reduceStock(product, item.quantity);
-    return total + getProductValue(product, item.quantity);
-  }, 0);
+  });
 
   order.status = "completed";
-  return "order successful! " + totalSum;
+
+  return `order successful! ${subtotal}`;
 }
+
+function validateOrder(order) {}
+//END OF CUSTOMER ORDERS HANDLING
 
 findProduct(inventory, 101);
 isProductAvailable({ id: 101, stock: 15 }, 21);
@@ -194,5 +219,6 @@ getProductValue({ id: 102, price: 500 }, 5);
 reduceStock({ id: 103, stock: 20 }, 16);
 restockProduct({ id: 104, stock: 10 }, 20);
 getInventoryValue(inventory);
-findOrder(orders, 5001);
-calculateOrderSubtotal(orders, inventory);
+const selectedOrder = findOrder(orders, 5001);
+calculateOrderSubtotal(selectedOrder, inventory);
+completeOrder(selectedOrder, inventory);
