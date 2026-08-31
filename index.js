@@ -210,7 +210,63 @@ function completeOrder(order, invento) {
   return `order successful! ${subtotal}`;
 }
 
-function validateOrder(order) {}
+function findCustomer(customer, customerId) {
+  //finds client/customer info and uses it later.
+  return customer.find((client) => client.id === customerId) || null;
+}
+
+function validateOrder(order) {
+  //validate if order exists
+  if (!order || !Array.isArray(order.items)) {
+    return {
+      valid: false,
+      errors: ["order does not exist"],
+    };
+  }
+
+  //check if atleast one product is available.
+  if (order.items.length === 0) {
+    return {
+      valid: false,
+      errors: ["no products available"],
+    };
+  }
+
+  //validate if customer exists
+  const customer = findCustomer(customers, order.customerId);
+
+  if (!customer) {
+    return {
+      valid: false,
+      errors: ["Customre does not exist"],
+    };
+  }
+
+  if (customer.active === false) {
+    return {
+      valid: false,
+      errors: ["customer is not active"],
+    };
+  }
+
+  return order.items.every((item) => {
+    const product = findProduct(inventory, item.productId);
+
+    if (!product) {
+      return false;
+    }
+
+    if (typeof item.quantity !== "number" || item.quantity <= 0) {
+      return false;
+    }
+
+    if (product.stock < item.quantity) {
+      return false;
+    }
+
+    return true;
+  });
+}
 //END OF CUSTOMER ORDERS HANDLING
 
 findProduct(inventory, 101);
@@ -222,3 +278,5 @@ getInventoryValue(inventory);
 const selectedOrder = findOrder(orders, 5001);
 calculateOrderSubtotal(selectedOrder, inventory);
 completeOrder(selectedOrder, inventory);
+findCustomer(customers, 2);
+validateOrder(selectedOrder);
