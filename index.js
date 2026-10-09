@@ -59,6 +59,18 @@ const customers = [
   },
 ];
 
+const locationFee = {
+  "zone A": 50,
+  "zone B": 100,
+  "zone C": 200,
+};
+
+const locationToZoneMap = {
+  "Nairobi": "zone A",
+  "Nakuru": "zone B",
+  "Mombasa": "zone C",
+};
+
 const drivers = [
   {
     id: 201,
@@ -210,8 +222,141 @@ function completeOrder(order, invento) {
   return `order successful! ${subtotal}`;
 }
 
-function validateOrder(order) {}
+function findCustomer(customer, customerId) {
+  //finds client/customer info and uses it later.
+  return customer.find((client) => client.id === customerId) || null;
+}
+
+function validateOrder(order) {
+  //validate if order exists
+  if (!order || !Array.isArray(order.items)) {
+    return {
+      valid: false,
+      errors: ["order does not exist"],
+    };
+  }
+
+  //check if atleast one product is available.
+  if (order.items.length === 0) {
+    return {
+      valid: false,
+      errors: ["no products available"],
+    };
+  }
+
+  //validate if customer exists
+  const customer = findCustomer(customers, order.customerId);
+
+  if (!customer) {
+    return {
+      valid: false,
+      errors: ["Customre does not exist"],
+    };
+  }
+
+  //check if customer is active or not active
+  if (customer.active === false) {
+    return {
+      valid: false,
+      errors: ["customer is not active"],
+    };
+  }
+
+  return order.items.every((item) => {
+    const product = findProduct(inventory, item.productId);
+
+    if (!product) {
+      return false;
+    }
+
+    if (typeof item.quantity !== "number" || item.quantity <= 0) {
+      return false;
+    }
+
+    if (product.stock < item.quantity) {
+      return false;
+    }
+
+    return true;
+  });
+}
 //END OF CUSTOMER ORDERS HANDLING
+
+//PRICING ENGINE
+const getTotalWeight = (order, invento) => {
+  //this function gets the total weight of all products in the order Array
+  if (!order || !Array.isArray(order.items)) {
+    return 0;
+  }
+  //since the order.items is an array we have to iterate through it to find each item
+  return order.items.reduce((totalWeight, item) => {
+    let product = findProduct(invento, item.productId);
+
+    //verify if the order is a valid input
+    if (product && typeof product.weight === "number") {
+      return totalWeight + item.quantity * product.weight;
+    }
+
+    return totalWeight.toFixed(2);
+  }, 0);
+};
+
+const getBaseWeightFee = (totalWeight) => {
+  //this function calculates the total fees for the total weight of the order products
+  if (typeof totalWeight !== "number" || totalWeight <= 0) {
+    return 0;
+  }
+  //this logic gives the price range accordding to weight
+  if (totalWeight < 2) return 200;
+
+  if (totalWeight <= 5) return 350;
+
+  if (totalWeight <= 10) return 500;
+
+  return 800;
+};
+
+const findLocation = (customerArray) => {
+  //this function finds each customers location and it returns an array of locations
+  return customers.map((customer) => customer.location) || null;
+};
+
+const zonedLocationsFunc = (locationArray, zoneMapArray) => {
+
+  const zonedLocations = locationArray.flatMap(locName => {
+    const zone = locationToZoneMap[locName];
+    const fee = zone ? locationFee[zone] : null;
+    // If the location has no mapped zone or fee, skip it completely
+  if (!zone || fee === undefined) {
+    return []; // Returning an empty array removes it from the final result
+  }
+
+    // If valid, return the object wrapped in an array
+  return [{
+    location: locName,
+    zone: zone,
+    fee: fee
+  }];
+  })
+
+  return zonedLocations
+};
+
+function weightLocationSubtotal(zonedArray, weightFee, locName) {
+  //first find the locatio  from the zoned locatio  by name if available add the fee to the weightFee
+  let selectedLocation = zonedArray.find(zoneLocation => zoneLocation.location === locName)
+
+  //check if the inputed location is available
+  if (!selectedLocation) {
+    return 0;
+  }
+
+  return selectedLocation.fee + weightFee
+}
+
+function calculateDeliveryFee() {
+  //this function will be done after the redeem points logic has been fully done
+}
 
 findProduct(inventory, 101);
 isProductAvailable({ id: 101, stock: 15 }, 21);
@@ -222,3 +367,10 @@ getInventoryValue(inventory);
 const selectedOrder = findOrder(orders, 5001);
 calculateOrderSubtotal(selectedOrder, inventory);
 completeOrder(selectedOrder, inventory);
+findCustomer(customers, 2);
+validateOrder(selectedOrder);
+let totalWeight = getTotalWeight(selectedOrder, inventory);
+let weightFees = getBaseWeightFee(totalWeight);
+let locationsArray = findLocation(customers);
+let zonedFeeArray = zonedLocationsFunc(locationsArray, locationToZoneMap);
+console.log(weightLocationSubtotal(zonedFeeArray, weightFees, "Nakuru"))
